@@ -1,0 +1,30 @@
+{
+  "name": "linode-dns-update",
+  "version": "1.0.0",
+  "description": "Update Linode DNS record with public IP address",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Strychnine-Dev/linode-dns-update.git"
+  },
+  "keywords": [
+    "linode",
+    "dns",
+    "update"
+  ],
+  "author": "Mason W. Buchanan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Strychnine-Dev/linode-dns-update/issues"
+  },
+  "homepage": "https://github.com/Strychnine-Dev/linode-dns-update#readme",
+  "dependencies": {
+    "@linode/api-v4": "^0.94.0",
+    "got": "^13.0.0",
+    "winston": "^3.9.0"
+  }
+}
