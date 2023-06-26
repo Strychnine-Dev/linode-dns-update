@@ -8,8 +8,8 @@ export const config = {
   linodeToken: process.env.LINODE_TOKEN,
   domain: process.env.DOMAIN,
   hostname: process.env.HOSTNAME,
-  domainId: process.env.DOMAIN_ID,
-  recordId: process.env.RECORD_ID,
+  domainId: parseInt(process.env.DOMAIN_ID, 10),
+  recordId: parseInt(process.env.RECORD_ID, 10),
 }
 
 export const logger = winston.createLogger({

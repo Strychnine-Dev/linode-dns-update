@@ -1,5 +1,5 @@
 import got from 'got';
-import { getDomains, getDomainRecords, updateDomainRecord } from '@linode/api-v4';
+import { getDomains, getDomainRecord, getDomainRecords, updateDomainRecord } from '@linode/api-v4';
 import { config, logger } from './config.js';
 
 (async () => {
@@ -32,6 +32,21 @@ import { config, logger } from './config.js';
 
   if (config.recordId) {
     recordId = config.recordId;
+
+    try {
+      const record = await getDomainRecord(domainId, recordId);
+
+      if (record) {
+        currentTarget = record?.target;
+      } else {
+        logger.error(`Error: Record ${recordId} does not exist on domain ${domainId}`);
+        process.exit(2);
+      }
+    } catch (err) {
+      logger.error(`Error retrieving Linode domain record: ${err.message}`);
+      logger.error(err.stack);
+      process.exit(2);
+    }
   } else if (config.hostname) {
     try {
       const records = (await getDomainRecords(domainId)).data;
@@ -47,7 +62,8 @@ import { config, logger } from './config.js';
   }
 
   if (recordId) {
-    logger.debug(`Linode Domain Record ID: ${domainId}`);
+    logger.debug(`Linode Domain Record ID: ${recordId}`);
+    logger.debug(`Current Target: ${currentTarget}`);
   } else {
     logger.error('Cannot find Linode domain record');
     process.exit(1);
