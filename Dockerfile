@@ -15,4 +15,6 @@ COPY . .
 RUN chown -R 1000:0 /usr/src/app && chmod -R ug+rwx /usr/src/app
 USER 1000
 
+ENV NODE_ENV=production
+
 CMD [ "node", "app" ]

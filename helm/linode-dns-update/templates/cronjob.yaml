@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "linode-dns-update.fullname" . }}
+  labels:
+    {{- include "linode-dns-update.labels" . | nindent 4 }}
+spec:
+  schedule: "{{ .Values.job.schedule }}"
+  successfulJobsHistoryLimit: {{ .Values.job.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.job.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+          - name: {{ .Chart.Name }}
+            image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+            imagePullPolicy: {{ .Values.image.pullPolicy }}
+            envFrom:
+            - secretRef:
+                name: {{ include "linode-dns-update.fullname" . }}-secrets
+            - configMapRef:
+                name: {{ include "linode-dns-update.fullname" . }}-config
+          restartPolicy: OnFailure

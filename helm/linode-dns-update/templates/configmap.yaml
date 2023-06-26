@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "linode-dns-update.fullname" . }}-config
+  labels:
+    {{- include "linode-dns-update.labels" . | nindent 4 }}
+data:
+  {{- if .Values.linode.domainId }}
+  DOMAIN_ID: "{{ .Values.linode.domainId }}"
+  {{- else }}
+  DOMAIN: {{ .Values.linode.domain }}
+  {{- end }}
+  {{- if .Values.linode.recordId }}
+  RECORD_ID: "{{ .Values.linode.recordId }}"
+  {{- else }}
+  HOSTNAME: {{ .Values.linode.hostname }}
+  {{- end }}

@@ -1,0 +1,26 @@
+# Default values for linode-dns-update.
+
+image:
+  repository: registry.strychnine.io/linode-dns-update
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: ""
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+job:
+  schedule: "*/15 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+
+linode:
+  # Linode Personal Access Token with Domain Read/Write scope minimum. Always pass the token with --set.
+  token: ""
+  # The Linode domain containing the hostname to be updated. Provide either the domain or the domain id.
+  domain: ""
+  domainId: ""
+  # The Linode domain record (hostname) to be updated. Provide either the hostname or record id.
+  hostname: ""
+  recordId: ""
