@@ -13,9 +13,9 @@ run:
 	linode-dns-update:latest
 
 push:
-	docker tag linode-dns-update:latest registry.strychnine.io/linode-dns-update:1.0.0
+	docker tag linode-dns-update:latest registry.strychnine.io/linode-dns-update:1.0.1
 	docker tag linode-dns-update:latest registry.strychnine.io/linode-dns-update:latest
-	docker push registry.strychnine.io/linode-dns-update:1.0.0
+	docker push registry.strychnine.io/linode-dns-update:1.0.1
 	docker push registry.strychnine.io/linode-dns-update:latest
 
 # Usage: `make install LINODE_TOKEN=abc123 DOMAIN=mydomain.com HOSTNAME=myname.mydomain.com`
@@ -25,3 +25,6 @@ install:
 
 uninstall:
 	helm uninstall linode-dns-update
+
+upgrade:
+	helm upgrade linode-dns-update helm/linode-dns-update

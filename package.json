@@ -1,6 +1,6 @@
 {
   "name": "linode-dns-update",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Update Linode DNS record with public IP address",
   "main": "app.js",
   "type": "module",
