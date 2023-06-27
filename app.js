@@ -1,6 +1,11 @@
-import got from 'got';
-import { getDomains, getDomainRecord, getDomainRecords, updateDomainRecord } from '@linode/api-v4';
 import { config, logger } from './config.js';
+import {
+  getLinodeDomainId,
+  getLinodeDomainRecord,
+  getLinodeDomainRecordById,
+  getPublicIPAddress,
+  updateLinodeDomainRecord,
+} from './helpers.js';
 
 (async () => {
   logger.info('Linode DNS Updater');
@@ -13,19 +18,10 @@ import { config, logger } from './config.js';
   if (config.domainId) {
     domainId = config.domainId;
   } else if (config.domain) {
-    try {
-      const domains = (await getDomains()).data;
-      domainId = domains.find(d => d.domain === config.domain)?.id;
-    } catch(err) {
-      logger.error(`Error retrieving Linode domains: ${err.message}`);
-      logger.error(err.stack);
-      process.exit(2);
-    }
+    domainId = await getLinodeDomainId(config.domain);
   }
 
-  if (domainId) {
-    logger.debug(`Linode Domain ID: ${domainId}`);
-  } else {
+  if (!domainId) {
     logger.error('Cannot find Linode domain');
     process.exit(1);
   }
@@ -33,50 +29,27 @@ import { config, logger } from './config.js';
   if (config.recordId) {
     recordId = config.recordId;
 
-    try {
-      const record = await getDomainRecord(domainId, recordId);
+    const record = await getLinodeDomainRecordById(domainId, recordId);
 
-      if (record) {
-        currentTarget = record?.target;
-      } else {
-        logger.error(`Error: Record ${recordId} does not exist on domain ${domainId}`);
-        process.exit(2);
-      }
-    } catch (err) {
-      logger.error(`Error retrieving Linode domain record: ${err.message}`);
-      logger.error(err.stack);
-      process.exit(2);
+    if (record) {
+      currentTarget = record?.target;
+    } else {
+      logger.error(`Error: Record ${recordId} does not exist on domain ${domainId}`);
+      process.exit(1);
     }
   } else if (config.hostname) {
-    try {
-      const records = (await getDomainRecords(domainId)).data;
-      const record = records.find(r => r.name === config.hostname.split('.')[0]);
+    const record = await getLinodeDomainRecord(domainId, config.hostname);
 
-      recordId = record?.id;
-      currentTarget = record?.target;
-    } catch(err) {
-      logger.error(`Error retrieving Linode domain records: ${err.message}`);
-      logger.error(err.stack);
-      process.exit(2);
-    }
+    recordId = record?.id;
+    currentTarget = record?.target;
   }
 
-  if (recordId) {
-    logger.debug(`Linode Domain Record ID: ${recordId}`);
-    logger.debug(`Current Target: ${currentTarget}`);
-  } else {
+  if (!recordId) {
     logger.error('Cannot find Linode domain record');
     process.exit(1);
   }
 
-  try {
-    target = (await got('http://ifconfig.co').json()).ip;
-    logger.debug(`IP Address: ${target}`);
-  } catch(err) {
-    logger.error(`Error retrieving public ip address: ${err.message}`);
-    logger.error(err.stack);
-    process.exit(2);
-  }
+  target = await getPublicIPAddress();
 
   if (currentTarget === target) {
     logger.info('Hostname is already up to date');
@@ -84,13 +57,7 @@ import { config, logger } from './config.js';
   }
 
   if (config.NODE_ENV === 'production') {
-    try {
-      await updateDomainRecord(domainId, recordId, { target });
-    } catch(err) {
-      logger.error(`Error updating record target: ${err.message}`);
-      logger.error(err.stack);
-      process.exit(2);
-    }
+    await updateLinodeDomainRecord(domainId, recordId, target);
   } else {
     logger.info(`Dry Run: Updating domain ${domainId} record ${recordId} from ${currentTarget} to ${target}`);
   }
