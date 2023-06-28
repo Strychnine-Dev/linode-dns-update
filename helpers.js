@@ -1,6 +1,6 @@
 import { getDomains, getDomainRecord, getDomainRecords, updateDomainRecord } from '@linode/api-v4';
 import got from 'got';
-import { logger } from './config.js';
+import { config, logger, redisClient } from './config.js';
 
 export async function getPublicIPAddress() {
   try {
@@ -9,7 +9,7 @@ export async function getPublicIPAddress() {
     logger.debug(`IP Address: ${ipData.ip}`);
 
     return ipData.ip;
-  } catch(err) {
+  } catch (err) {
     logger.error(`Error retrieving public ip address: ${err.message}`);
     logger.error(err.stack);
     process.exit(2);
@@ -24,7 +24,7 @@ export async function getLinodeDomainId(domainName) {
     logger.debug(`Linode Domain ID: ${domain.id}`);
 
     return domain.id;
-  } catch(err) {
+  } catch (err) {
     logger.error(`Error retrieving Linode domains: ${err.message}`);
     logger.error(err.stack);
     process.exit(2);
@@ -40,7 +40,7 @@ export async function getLinodeDomainRecord(domainId, hostname) {
     logger.debug(`Current Target: ${record.target}`);
 
     return record;
-  } catch(err) {
+  } catch (err) {
     logger.error(`Error retrieving Linode domain records: ${err.message}`);
     logger.error(err.stack);
     process.exit(2);
@@ -68,5 +68,61 @@ export async function updateLinodeDomainRecord(domainId, recordId, target) {
     logger.error(`Error updating record target: ${err.message}`);
     logger.error(err.stack);
     process.exit(2);
+  }
+}
+
+export async function connectRedisHost() {
+  try {
+    await redisClient.connect();
+
+    logger.debug(`Connected to Redis host on ${config.redisHost}:${config.redisPort}`);
+
+    redisClient.on('error', err => {
+      config.cacheEnabled = false;
+      logger.warn(`Warning! Error performing Redis call: ${err.message}`);
+      logger.warn('Disabling cache...');
+    });
+  } catch (err) {
+    config.cacheEnabled = false;
+    logger.warn(`Warning! Could not connect to Redis: ${err.message}`);
+    logger.warn('Disabling cache...');
+  }
+}
+
+export async function cacheCurrentTarget(recordId, target) {
+  logger.debug(`Caching target IP ${target} for record ${recordId}`);
+
+  try {
+    await redisClient.set(`${recordId}`, target, {
+      EX: config.cacheTimeout > 0 ? config.cacheTimeout : undefined,
+    });
+  } catch (err) {
+    config.cacheEnabled = false;
+    logger.warn(`Warning! Error setting Redis key: ${err.message}`);
+    logger.warn('Disabling cache...');
+  }
+}
+
+export async function getTargetFromCache(recordId) {
+  try {
+    const cachedTarget = await redisClient.get(`${recordId}`);
+
+    logger.debug(`Using target IP from cache: ${cachedTarget}`);
+
+    return cachedTarget;
+  } catch (err) {
+    config.cacheEnabled = false;
+    logger.warn(`Warning! Error reading Redis key: ${err.message}`);
+    logger.warn('Disabling cache...');
+  }
+}
+
+export async function disconnectRedisHost() {
+  try {
+    await redisClient.quit();
+
+    logger.debug('Disconnected from Redis host');
+  } catch (err) {
+    logger.warn(`Warning! Error disconnecting from Redis host: ${err.message}`);
   }
 }
