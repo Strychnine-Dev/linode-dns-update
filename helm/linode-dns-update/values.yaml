@@ -12,8 +12,8 @@ fullnameOverride: ""
 
 job:
   schedule: "*/15 * * * *"
-  successfulJobsHistoryLimit: 3
-  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 4
+  failedJobsHistoryLimit: 2
 
 linode:
   # Linode Personal Access Token with Domain Read/Write scope minimum. Always pass the token with --set.
